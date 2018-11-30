@@ -12,5 +12,6 @@ func Run(tty bool,command string)  {
 		log.Error(err)
 	}
 	parent.Wait()
+	//syscall.Mount("proc","/proc","proc",syscall.MS_NODEV,"")
 	os.Exit(-1)
 }
