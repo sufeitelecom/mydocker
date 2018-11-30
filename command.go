@@ -3,8 +3,8 @@ package mydoker
 import (
 	"github.com/urfave/cli"
 	log "github.com/sirupsen/logrus"
-	"mydoker/container"
 	"fmt"
+	"github.com/sufeitelecom/mydocker/container"
 )
 
 var initcommand = cli.Command{
