@@ -1,10 +1,11 @@
-package mydoker
+package main
 
 import (
 	log "github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 	"os"
 )
+
 
 func main() {
 	app := cli.NewApp()

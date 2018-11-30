@@ -1,4 +1,4 @@
-package mydoker
+package main
 
 import (
 	"github.com/urfave/cli"

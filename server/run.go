@@ -1,7 +1,6 @@
-package mydoker
+package main
 
 import (
-
 	log "github.com/sirupsen/logrus"
 	"os"
 	"github.com/sufeitelecom/mydocker/container"
