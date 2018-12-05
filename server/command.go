@@ -5,6 +5,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"fmt"
 	"github.com/sufeitelecom/mydocker/container"
+	"github.com/sufeitelecom/mydocker/cgroups/subsystems"
 )
 
 var initcommand = cli.Command{
@@ -12,9 +13,7 @@ var initcommand = cli.Command{
 	Usage:"Init container process",
 	Action: func(c *cli.Context) error {
 		log.Infof("Init come on")
-		cmd := c.Args().Get(0)
-		log.Infof("command is %s",cmd)
-		err := container.Runcontainerinit(cmd,nil)
+		err := container.Runcontainerinit()
 		return  err
 	},
 }
@@ -27,14 +26,37 @@ var runcommand  = cli.Command{
 			Name:"ti",
 			Usage:"enable tty",
 		},
+		cli.StringFlag{
+			Name:  "m",
+			Usage: "memory limit",
+		},
+		cli.StringFlag{
+			Name:  "cpushare",
+			Usage: "cpushare limit",
+		},
+		cli.StringFlag{
+			Name:  "cpuset",
+			Usage: "cpuset limit",
+		},
 	},
 	Action: func(c *cli.Context) error{
 		if len(c.Args()) < 1{
 			return fmt.Errorf("Missing container command")
 		}
-		cmd := c.Args().Get(0)
+		var cmdArray []string
+		for _, arg := range c.Args() {
+			cmdArray = append(cmdArray, arg)
+		}
+		log.Infof("command is %v",cmdArray)
+		//cmdArray = cmdArray[1:]
 		tty := c.Bool("ti")
-		Run(tty,cmd)
+		resconf := &subsystems.ResourceConfig{
+			MemoryLimit: c.String("m"),
+			CpuShare: c.String("cpushare"),
+			CpuSet: c.String("cpuset"),
+		}
+
+		Run(tty,cmdArray,resconf)
 		return nil
 	},
 }
