@@ -38,6 +38,10 @@ var runcommand  = cli.Command{
 			Name:  "cpuset",
 			Usage: "cpuset limit",
 		},
+		cli.StringFlag{
+			Name: "v",
+			Usage: "volume",
+		},
 	},
 	Action: func(c *cli.Context) error{
 		if len(c.Args()) < 1{
@@ -50,13 +54,14 @@ var runcommand  = cli.Command{
 		log.Infof("command is %v",cmdArray)
 		//cmdArray = cmdArray[1:]
 		tty := c.Bool("ti")
+		volume := c.String("v")
 		resconf := &subsystems.ResourceConfig{
 			MemoryLimit: c.String("m"),
 			CpuShare: c.String("cpushare"),
 			CpuSet: c.String("cpuset"),
 		}
 
-		Run(tty,cmdArray,resconf)
+		Run(tty,cmdArray,resconf,volume)
 		return nil
 	},
 }

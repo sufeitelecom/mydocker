@@ -8,8 +8,8 @@ import (
 	"github.com/sufeitelecom/mydocker/cgroups/subsystems"
 )
 
-func Run(tty bool,command []string,res *subsystems.ResourceConfig)  {
-	parent,writepipe := container.Newprocess(tty)
+func Run(tty bool,command []string,res *subsystems.ResourceConfig,volume string)  {
+	parent,writepipe := container.Newprocess(tty,volume)
 	if parent == nil {
 		log.Errorf("Create new process fail!")
 		return
@@ -25,7 +25,11 @@ func Run(tty bool,command []string,res *subsystems.ResourceConfig)  {
 	cgroupmanager.Apply(parent.Process.Pid)
 
 	container.SendInitCommand(command,writepipe)
+
 	parent.Wait()
+	mnturl := "/home/sufei/busybox/root/mnt/"
+	rooturl := "/home/sufei/busybox/root/"
+	container.DeleteWorkSpace(rooturl,mnturl,volume)
 	//syscall.Mount("proc","/proc","proc",syscall.MS_NODEV,"")
 	os.Exit(-1)
 }

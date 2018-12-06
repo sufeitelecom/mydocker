@@ -7,39 +7,11 @@ import (
 	log "github.com/sirupsen/logrus"
 	"strings"
 	"io/ioutil"
-	"fmt"
 )
 
-func NewPipe()(*os.File,*os.File,error)  {
-	read, write,err := os.Pipe()
-	if err != nil{
-		return nil,nil,err
-	}
-	return read,write,err
-}
 
-func SendInitCommand(comarray []string,writepipe *os.File)  {
-	command := strings.Join(comarray," ")
-	log.Infof("command is %s",command)
-	
-	writepipe.WriteString(command)
-	writepipe.Close()
-}
-
-func ReadUserCommand() []string  {
-	pipe := os.NewFile(uintptr(3),"pipe")
-	msg ,err := ioutil.ReadAll(pipe)
-
-	if err != nil {
-		log.Errorf("init read pipe fail: %v",err)
-		return nil
-	}
-
-	msgStr := string(msg)
-	return strings.Split(msgStr," ")
-}
 //Namespace isolation
-func Newprocess(tty bool) (*exec.Cmd, *os.File) {
+func Newprocess(tty bool,volume string) (*exec.Cmd, *os.File) {
 	log.Infof("Namespace isolation!")
 
 	readPipe,writePipe,err := NewPipe()
@@ -60,8 +32,8 @@ func Newprocess(tty bool) (*exec.Cmd, *os.File) {
 		Gid: 0,
 	}
 
-	cmd.SysProcAttr.UidMappings = []syscall.SysProcIDMap{{ContainerID: 0, HostID: 1001, Size: 1}}
-	cmd.SysProcAttr.GidMappings = []syscall.SysProcIDMap{{ContainerID: 0, HostID: 1001, Size: 1}}
+	cmd.SysProcAttr.UidMappings = []syscall.SysProcIDMap{{ContainerID: 0, HostID: 0, Size: 1}}
+	cmd.SysProcAttr.GidMappings = []syscall.SysProcIDMap{{ContainerID: 0, HostID: 0, Size: 1}}
 
 	if tty {
 		cmd.Stdout = os.Stdout
@@ -70,31 +42,38 @@ func Newprocess(tty bool) (*exec.Cmd, *os.File) {
 	}
 	cmd.ExtraFiles = []*os.File{readPipe}
 
+	mnturl := "/home/sufei/busybox/root/mnt/"
+	rooturl := "/home/sufei/busybox/root/"
+	CreateWorkSpace(rooturl,mnturl,volume)
+	cmd.Dir = mnturl
+
 	return cmd,writePipe
 }
-
-//Init container.
-func Runcontainerinit() error {
-	log.Infof("Init container ! ")
-	cmdArr := ReadUserCommand()
-	if cmdArr == nil || len(cmdArr) == 0{
-		return fmt.Errorf("get user command error!")
+func NewPipe()(*os.File,*os.File,error)  {
+	read, write,err := os.Pipe()
+	if err != nil{
+		return nil,nil,err
 	}
+	return read,write,err
+}
 
-	defaultmountflag := syscall.MS_NOEXEC |syscall.MS_NOSUID | syscall.MS_NODEV
-	syscall.Mount("proc","/proc","proc",uintptr(defaultmountflag),"")
+func SendInitCommand(comarray []string,writepipe *os.File)  {
+	command := strings.Join(comarray," ")
+	log.Infof("command is %s",command)
 
-	path ,err := exec.LookPath(cmdArr[0])
+	writepipe.WriteString(command)
+	writepipe.Close()
+}
+
+func ReadUserCommand() []string  {
+	pipe := os.NewFile(uintptr(3),"pipe")
+	msg ,err := ioutil.ReadAll(pipe)
+
 	if err != nil {
-		log.Errorf("can not find the command %s",path)
-		return err
+		log.Errorf("init read pipe fail: %v",err)
+		return nil
 	}
 
-	log.Infof("find command :%s",path)
-
-	//exchange the initprocess , PID of command is 1
-	if err := syscall.Exec(path,cmdArr[0:],os.Environ());err != nil {
-		log.Errorf(err.Error())
-	}
-	return nil
+	msgStr := string(msg)
+	return strings.Split(msgStr," ")
 }
