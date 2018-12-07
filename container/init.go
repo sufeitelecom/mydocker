@@ -38,10 +38,11 @@ func pivotroot(root string) error  {
 		return fmt.Errorf("Mount rootfs error : %v",err)
 	}
 
-	pivotpath := filepath.Join(root,".pivot_root")
+	pivotpath := filepath.Join(root,"/.pivot_root")
 	if err := os.Mkdir(pivotpath,0777);err != nil{
 		return err
 	}
+
 
 	if err := syscall.PivotRoot(root,pivotpath); err != nil{
 		return err
@@ -71,7 +72,6 @@ func setMount()  {
 		return
 	}
 	log.Infof("Current location is %s",pwd_path)
-
 
 
 	if err := pivotroot(pwd_path);err != nil{

@@ -7,11 +7,35 @@ import (
 	log "github.com/sirupsen/logrus"
 	"strings"
 	"io/ioutil"
+	"math/rand"
+	"time"
+	"fmt"
 )
 
+var (
+	RUNNING             string = "running"
+	STOP                string = "stopped"
+	Exit                string = "exited"
+	DefaultInfoLocation string = "/home/sufei/busybox/root/mydocker/%s"
+	ConfigName          string = "config.json"
+	//ContainerLogFile    string = "container.log"
+	RootUrl				string = "/home/sufei/busybox/root"
+	MntUrl				string = "/home/sufei/busybox/root/mnt/%s"
+	WriteLayerUrl 		string = "/home/sufei/busybox/root/writeLayer/%s"
+)
+
+type ContainerInfo struct {
+	Pid         string `json:"pid"`        //容器的init进程在宿主机上的 PID
+	Id          string `json:"id"`         //容器Id
+	Name        string `json:"name"`       //容器名
+	Command     string `json:"command"`    //容器内init运行命令
+	CreatedTime string `json:"createTime"` //创建时间
+	Status      string `json:"status"`     //容器的状态
+	Volume      string `json:"volume"`     //容器的数据卷
+} 
 
 //Namespace isolation
-func Newprocess(tty bool,volume string) (*exec.Cmd, *os.File) {
+func Newprocess(tty bool,volume string,containerName string) (*exec.Cmd, *os.File) {
 	log.Infof("Namespace isolation!")
 
 	readPipe,writePipe,err := NewPipe()
@@ -42,10 +66,9 @@ func Newprocess(tty bool,volume string) (*exec.Cmd, *os.File) {
 	}
 	cmd.ExtraFiles = []*os.File{readPipe}
 
-	mnturl := "/home/sufei/busybox/root/mnt/"
-	rooturl := "/home/sufei/busybox/root/"
-	CreateWorkSpace(rooturl,mnturl,volume)
-	cmd.Dir = mnturl
+
+	CreateWorkSpace(containerName,volume)
+	cmd.Dir = fmt.Sprintf(MntUrl,containerName)
 
 	return cmd,writePipe
 }
@@ -76,4 +99,14 @@ func ReadUserCommand() []string  {
 
 	msgStr := string(msg)
 	return strings.Split(msgStr," ")
+}
+
+func RandStringBytes(n int) string  {
+	letter := "1234567890"
+	rand.Seed(time.Now().UnixNano())
+	b := make([]byte,n)
+	for i := range b{
+		b[i] = letter[rand.Intn(len(letter))]
+	}
+	return string(b)
 }

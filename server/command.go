@@ -20,11 +20,15 @@ var initcommand = cli.Command{
 
 var runcommand  = cli.Command{
 	Name:"run",
-	Usage:"create a container",
+	Usage:"Create a container with namespace and cgroups limit ie: mydocker run -ti [command]`",
 	Flags:[]cli.Flag{
 		cli.BoolFlag{
 			Name:"ti",
 			Usage:"enable tty",
+		},
+		cli.BoolFlag{
+			Name:"d",
+			Usage:"detach container",
 		},
 		cli.StringFlag{
 			Name:  "m",
@@ -39,21 +43,33 @@ var runcommand  = cli.Command{
 			Usage: "cpuset limit",
 		},
 		cli.StringFlag{
+			Name:"name",
+			Usage:"container name",
+		},
+		cli.StringFlag{
 			Name: "v",
 			Usage: "volume",
 		},
 	},
 	Action: func(c *cli.Context) error{
 		if len(c.Args()) < 1{
-			return fmt.Errorf("Missing container command")
+			return fmt.Errorf("Missing container command parameter.")
 		}
+
 		var cmdArray []string
 		for _, arg := range c.Args() {
 			cmdArray = append(cmdArray, arg)
 		}
 		log.Infof("command is %v",cmdArray)
-		//cmdArray = cmdArray[1:]
+
 		tty := c.Bool("ti")
+		detach := c.Bool("d")
+		if tty && detach {
+			return fmt.Errorf("ti and d parameter is not both provided.")
+		}
+
+		containerName := c.String("name")
+
 		volume := c.String("v")
 		resconf := &subsystems.ResourceConfig{
 			MemoryLimit: c.String("m"),
@@ -61,8 +77,44 @@ var runcommand  = cli.Command{
 			CpuSet: c.String("cpuset"),
 		}
 
-		Run(tty,cmdArray,resconf,volume)
+		Run(tty,cmdArray,resconf,volume,containerName)
 		return nil
 	},
 }
 
+// mydocker commit
+var commitcommand = cli.Command{
+	Name: "commit",
+	Usage: "Tar a container into image.",
+	Action: func(c *cli.Context) error {
+		if len(c.Args()) < 2 {
+			return fmt.Errorf("Container name and image name must be provided.")
+		}
+		container_name := c.Args().Get(0)
+		image_name := c.Args().Get(1)
+		commitContainer(container_name,image_name)
+		return nil
+	},
+}
+
+var listcommand = cli.Command{
+	Name: "ps",
+	Usage:"list all the container.",
+	Action: func(c *cli.Context) error {
+		Listcontainers()
+		return nil
+	},
+}
+
+var stopcommand = cli.Command{
+	Name:"stop",
+	Usage:"stop a container.",
+	Action: func(c *cli.Context) error{
+		if len(c.Args()) < 1{
+			return fmt.Errorf("please tell the container name.")
+		}
+		containername := c.Args().Get(0)
+		stopContainer(containername)
+		return nil
+	},
+}

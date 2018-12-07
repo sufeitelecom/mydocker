@@ -7,6 +7,7 @@ import (
 )
 
 
+
 func main() {
 	app := cli.NewApp()
 	app.Name = "mydocker"
@@ -15,6 +16,9 @@ func main() {
 	app.Commands = []cli.Command{
 		initcommand,
 		runcommand,
+		commitcommand,
+		listcommand,
+		stopcommand,
 	}
 
 	app.Before = func(c *cli.Context) error {
