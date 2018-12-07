@@ -18,7 +18,7 @@ var (
 	Exit                string = "exited"
 	DefaultInfoLocation string = "/home/sufei/busybox/root/mydocker/%s"
 	ConfigName          string = "config.json"
-	//ContainerLogFile    string = "container.log"
+	ContainerLogFile    string = "container.log"
 	RootUrl				string = "/home/sufei/busybox/root"
 	MntUrl				string = "/home/sufei/busybox/root/mnt/%s"
 	WriteLayerUrl 		string = "/home/sufei/busybox/root/writeLayer/%s"
@@ -63,9 +63,21 @@ func Newprocess(tty bool,volume string,containerName string) (*exec.Cmd, *os.Fil
 		cmd.Stdout = os.Stdout
 		cmd.Stdin = os.Stdin
 		cmd.Stderr = os.Stderr
+	} else {
+		dirurl := fmt.Sprintf(DefaultInfoLocation,containerName)
+		if err := os.MkdirAll(dirurl,0622);err != nil{
+			log.Errorf("Mkdir dir %s error %v",dirurl,err)
+			return nil,nil
+		}
+		stdoutlogpath := dirurl + "/" + ContainerLogFile
+		logfile ,err := os.Create(stdoutlogpath)
+		if err != nil {
+			log.Errorf("Create file %s error %v", stdoutlogpath,err)
+			return nil ,nil
+		}
+		cmd.Stdout = logfile
 	}
 	cmd.ExtraFiles = []*os.File{readPipe}
-
 
 	CreateWorkSpace(containerName,volume)
 	cmd.Dir = fmt.Sprintf(MntUrl,containerName)

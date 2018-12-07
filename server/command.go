@@ -118,3 +118,29 @@ var stopcommand = cli.Command{
 		return nil
 	},
 }
+
+var removecommand  = cli.Command{
+	Name:"rm",
+	Usage:"remove unused container.",
+	Action: func(c *cli.Context) error{
+		if len(c.Args()) < 1{
+			return fmt.Errorf("Missing container name.")
+		}
+		containername := c.Args().Get(0)
+		removecontainer(containername)
+		return nil
+	},
+}
+
+var logcommand = cli.Command{
+	Name:"logs",
+	Usage:"print logs of container.",
+	Action: func(c *cli.Context) error {
+		if len(c.Args()) < 1{
+			return fmt.Errorf("Missing container name.")
+		}
+		containername := c.Args().Get(0)
+		logcontainer(containername)
+		return nil
+	},
+}
