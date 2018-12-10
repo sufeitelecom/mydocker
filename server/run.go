@@ -13,14 +13,14 @@ import (
 	"strconv"
 )
 
-func Run(tty bool,command []string,res *subsystems.ResourceConfig,volume string,containerName string)  {
+func Run(tty bool,command []string,res *subsystems.ResourceConfig,volume string,containerName string,envSlice []string)  {
 
 	containerID := container.RandStringBytes(10)
 	if containerName == ""{
 		containerName = containerID
 	}
 
-	parent,writepipe := container.Newprocess(tty,volume,containerName)
+	parent,writepipe := container.Newprocess(tty,volume,containerName,envSlice)
 	if parent == nil {
 		log.Errorf("Create new process fail!")
 		return

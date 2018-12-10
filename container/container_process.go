@@ -35,7 +35,7 @@ type ContainerInfo struct {
 } 
 
 //Namespace isolation
-func Newprocess(tty bool,volume string,containerName string) (*exec.Cmd, *os.File) {
+func Newprocess(tty bool,volume string,containerName string,envSlice []string) (*exec.Cmd, *os.File) {
 	log.Infof("Namespace isolation!")
 
 	readPipe,writePipe,err := NewPipe()
@@ -78,6 +78,7 @@ func Newprocess(tty bool,volume string,containerName string) (*exec.Cmd, *os.Fil
 		cmd.Stdout = logfile
 	}
 	cmd.ExtraFiles = []*os.File{readPipe}
+	cmd.Env = append(os.Environ(),envSlice...)
 
 	CreateWorkSpace(containerName,volume)
 	cmd.Dir = fmt.Sprintf(MntUrl,containerName)

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/sufeitelecom/mydocker/container"
 	"github.com/sufeitelecom/mydocker/cgroups/subsystems"
+	"os"
 )
 
 var initcommand = cli.Command{
@@ -50,6 +51,10 @@ var runcommand  = cli.Command{
 			Name: "v",
 			Usage: "volume",
 		},
+		cli.StringSliceFlag{
+			Name:"e",
+			Usage:"set environment",
+		},
 	},
 	Action: func(c *cli.Context) error{
 		if len(c.Args()) < 1{
@@ -69,6 +74,7 @@ var runcommand  = cli.Command{
 		}
 
 		containerName := c.String("name")
+		envSlice := c.StringSlice("e")
 
 		volume := c.String("v")
 		resconf := &subsystems.ResourceConfig{
@@ -77,7 +83,7 @@ var runcommand  = cli.Command{
 			CpuSet: c.String("cpuset"),
 		}
 
-		Run(tty,cmdArray,resconf,volume,containerName)
+		Run(tty,cmdArray,resconf,volume,containerName,envSlice)
 		return nil
 	},
 }
@@ -141,6 +147,27 @@ var logcommand = cli.Command{
 		}
 		containername := c.Args().Get(0)
 		logcontainer(containername)
+		return nil
+	},
+}
+
+var execcommand = cli.Command{
+	Name:"exec",
+	Usage:"exec a command into container.",
+	Action: func(c *cli.Context) error {
+		if os.Getenv(ENV_EXEC_PID) != ""{
+			log.Infof("pid callback %s",os.Getpid())
+			return nil
+		}
+		if len(c.Args()) < 2{
+			return fmt.Errorf("Missing container name or command")
+		}
+		containername := c.Args().Get(0)
+		var commandArray []string
+		for _,arg := range c.Args().Tail() {
+			commandArray = append(commandArray,arg)
+		}
+		execContainer(containername,commandArray)
 		return nil
 	},
 }
