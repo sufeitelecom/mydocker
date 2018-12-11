@@ -13,7 +13,7 @@ import (
 func Listcontainers()  {
 	dirs := fmt.Sprintf(container.DefaultInfoLocation,"")
 	dirs = dirs[:len(dirs)-1]
-
+	
 	files,err := ioutil.ReadDir(dirs)
 	if err != nil {
 		log.Errorf("Read dir %s error. %v",dirs,err)
@@ -22,6 +22,9 @@ func Listcontainers()  {
 
 	var containers []*container.ContainerInfo
 	for _,file := range files{
+		if file.Name() == "network" {
+			continue
+		}
 		tmpinfo,err := getContainerInfo(file)
 		if err != nil{
 			log.Errorf("Get container info error %v",err)
