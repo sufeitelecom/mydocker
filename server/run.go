@@ -11,9 +11,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"github.com/sufeitelecom/mydocker/network"
 )
 
-func Run(tty bool,command []string,res *subsystems.ResourceConfig,volume string,containerName string,envSlice []string)  {
+func Run(tty bool,command []string,res *subsystems.ResourceConfig,volume string,containerName string,envSlice []string,nk string,portmapping []string)  {
 
 	containerID := container.RandStringBytes(10)
 	if containerName == ""{
@@ -39,6 +40,21 @@ func Run(tty bool,command []string,res *subsystems.ResourceConfig,volume string,
 	defer cgroupmanager.Destory()
 	cgroupmanager.Set(res)
 	cgroupmanager.Apply(parent.Process.Pid)
+
+	if nk != "" {
+		// config container network
+		network.Init()
+		containerInfo := &container.ContainerInfo{
+			Id:          containerID,
+			Pid:         strconv.Itoa(parent.Process.Pid),
+			Name:        containerName,
+			PortMapping: portmapping,
+		}
+		if err := network.Connect(nk, containerInfo); err != nil {
+			log.Errorf("Error Connect Network %v", err)
+			return
+		}
+	}
 
 	container.SendInitCommand(command,writepipe)
 
